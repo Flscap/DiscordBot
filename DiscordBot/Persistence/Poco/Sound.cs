@@ -1,0 +1,10 @@
+﻿namespace DiscordBot.Persistence.Poco;
+
+public class Sound
+{
+    public ulong Id { get; set; }
+    public string? Label { get; set; }
+    public string? Emoji { get; set; }
+    public int ButtonStyle { get; set; }
+    public ulong GuildId { get; set; }
+}
