@@ -129,7 +129,7 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
         [SlashCommand("get", "Get Soundboard channel")]
         public async Task GetSoundboardChannelAsync()
         {
-            Guild? guild = await _guildRepository.GetByIdAsync(Context.Guild.Id);
+            Guild? guild = await _guildRepository.RetrieveByIdAsync(Context.Guild.Id);
 
             if (guild == null)
             {
@@ -151,7 +151,7 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
                 SocketTextChannel textChannel = Context.Guild.GetTextChannel(channelIdUlong);
                 if (textChannel != null)
                 {
-                    Guild? guild = await _guildRepository.GetByIdAsync(Context.Guild.Id);
+                    Guild? guild = await _guildRepository.RetrieveByIdAsync(Context.Guild.Id);
                     if (guild != null)
                     {
                         if (guild.SoundboardTextChannelId != channelIdUlong)
@@ -171,7 +171,7 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
                             Id = Context.Guild.Id,
                             SoundboardTextChannelId = channelIdUlong
                         };
-                        await _guildRepository.AddAsync(newGuild);
+                        await _guildRepository.CreateAsync(newGuild);
                     }
                     await RespondAsync($"Soundboard channel set to: {textChannel.Name}", ephemeral: true);
                 }

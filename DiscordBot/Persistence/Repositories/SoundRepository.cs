@@ -3,69 +3,47 @@ using DiscordBot.Persistence.Poco;
 
 namespace DiscordBot.Persistence.Repositories;
 
-public class SoundRepository : IRepository<Sound>
+public class SoundRepository : BaseRepository, IRepository<Sound>
 {
-    // ulong Id, string Label, string Emoji, int ButtonStyle
-    private readonly IDbService _db;
+    public SoundRepository(IDbService dbService) : base(dbService) { }
 
-    public SoundRepository(IDbService db)
+    public Task<Sound?> RetrieveByIdAsync(ulong id)
     {
-        _db = db;
-    }
-
-    public async Task<Sound?> GetByIdAsync(ulong id)
-    {
-        return await _db.Connection.QuerySingleOrDefaultAsync<Sound>(
+        return _db.QuerySingleOrDefaultAsync<Sound>(
             "SELECT * FROM Sounds WHERE Id = @Id",
-            new
-            {
-                Id = id
-            }
+            new { Id = id }
         );
     }
 
-    public async Task<IEnumerable<Sound>> GetAllAsync()
+    public Task<int> CreateAsync(Sound sound)
     {
-        return await _db.Connection.QueryAsync<Sound>("SELECT * FROM Sounds;");
-    }
-
-    public async Task<int> AddAsync(Sound sound)
-    {
-        return await _db.Connection.ExecuteAsync(
+        return _db.ExecuteAsync(
             "INSERT INTO Sounds (Label, Emoji, ButtonStyle, GuildId) VALUES (@Label, @Emoji, @ButtonStyle, @GuildId);",
-            new
-            {
-                Label = sound.Label,
-                Emoji = sound.Emoji,
-                ButtonStyle = sound.ButtonStyle,
-                GuildId = sound.GuildId
-            }
+            sound
         );
     }
 
-    public async Task<int> UpdateAsync(Sound sound)
+    public Task<ulong> PersistAsync(Sound sound)
     {
-        return await _db.Connection.ExecuteAsync(
+        return PersistAsync(
+            "INSERT INTO Sounds (Label, Emoji, ButtonStyle, GuildId) VALUES (@Label, @Emoji, @ButtonStyle, @GuildId);",
+            sound
+        );
+    }
+
+    public Task<int> UpdateAsync(Sound sound)
+    {
+        return _db.ExecuteAsync(
             "UPDATE Sounds SET Label = @Label, Emoji = @Emoji, ButtonStyle = @ButtonStyle, GuildId = @GuildId WHERE Id = @Id;",
-            new
-            {
-                Id = sound.Id,
-                Label = sound.Label,
-                Emoji = sound.Emoji,
-                ButtonStyle = sound.ButtonStyle,
-                GuildId = sound.GuildId
-            }
+            sound
         );
     }
 
-    public async Task<int> DeleteAsync(ulong id)
+    public Task<int> DeleteAsync(ulong id)
     {
-        return await _db.Connection.ExecuteAsync(
+        return _db.ExecuteAsync(
             "DELETE FROM Sounds WHERE Id = @Id;",
-            new
-            {
-                Id = id
-            }
+            new { Id = id }
         );
     }
 }

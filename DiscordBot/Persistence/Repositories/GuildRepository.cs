@@ -3,63 +3,47 @@ using DiscordBot.Persistence.Poco;
 
 namespace DiscordBot.Persistence.Repositories;
 
-public class GuildRepository : IRepository<Guild>
+public class GuildRepository : BaseRepository, IRepository<Guild>
 {
-    private readonly IDbService _db;
+    public GuildRepository(IDbService dbService) : base(dbService) { }
 
-    public GuildRepository(IDbService db)
+    public Task<Guild?> RetrieveByIdAsync(ulong id)
     {
-        _db = db;
-    }
-
-    public async Task<Guild?> GetByIdAsync(ulong id)
-    {
-        return await _db.Connection.QuerySingleOrDefaultAsync<Guild>(
+        return _db.QuerySingleOrDefaultAsync<Guild>(
             "SELECT * FROM Guilds WHERE Id = @Id",
-            new
-            {
-                Id = id
-            }
+            new { Id = id }
         );
     }
 
-    public async Task<IEnumerable<Guild>> GetAllAsync()
+    public Task<int> CreateAsync(Guild guild)
     {
-        return await _db.Connection.QueryAsync<Guild>("SELECT * FROM Guilds;");
-    }
-
-    public async Task<int> AddAsync(Guild guild)
-    {
-        return await _db.Connection.ExecuteAsync(
+        return _db.ExecuteAsync(
             "INSERT INTO Guilds (Id, SoundboardTextChannelId) VALUES (@Id, @SoundboardTextChannelId);",
-            new
-            {
-                Id = guild.Id,
-                SoundboardTextChannelId = guild.SoundboardTextChannelId
-            }
+            guild
         );
     }
 
-    public async Task<int> UpdateAsync(Guild guild)
+    public Task<ulong> PersistAsync(Guild guild)
     {
-        return await _db.Connection.ExecuteAsync(
+        return PersistAsync(
+            "INSERT INTO Guilds (Id, SoundboardTextChannelId) VALUES (@Id, @SoundboardTextChannelId);",
+            guild
+        );
+    }
+
+    public Task<int> UpdateAsync(Guild guild)
+    {
+        return _db.ExecuteAsync(
             "UPDATE Guilds SET SoundboardTextChannelId = @SoundboardTextChannelId WHERE Id = @Id;",
-            new
-            {
-                Id = guild.Id,
-                SoundboardTextChannelId = guild.SoundboardTextChannelId
-            }
+            guild
         );
     }
 
-    public async Task<int> DeleteAsync(ulong id)
+    public Task<int> DeleteAsync(ulong id)
     {
-        return await _db.Connection.ExecuteAsync(
+        return _db.ExecuteAsync(
             "DELETE FROM Guilds WHERE Id = @Id;",
-            new
-            {
-                Id = id
-            }
+            new { Id = id }
         );
-    } 
+    }
 }
