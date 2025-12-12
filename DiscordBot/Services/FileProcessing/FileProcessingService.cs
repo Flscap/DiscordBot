@@ -9,7 +9,7 @@ public class FileProcessingService : IFileProcessingService
         _pathService = pathService;
     }
 
-    public async Task<string> DownloadAndSaveAttachmentAsync(string url, ulong guildId, IFileProcessor? fileProcessor)
+    public async Task<string> DownloadAndSaveAttachmentAsync(string url, string extension, ulong guildId, string subfolder, IFileProcessor? fileProcessor)
     {
         var data = await DownloadAsync(url);
 
@@ -18,7 +18,7 @@ public class FileProcessingService : IFileProcessingService
             data = await fileProcessor.ProcessAsync(data);
         }
 
-        var filePath = await SaveAsync(data, guildId);
+        var filePath = await SaveAsync(data, extension, guildId, subfolder);
         return filePath;
     }
 
@@ -28,10 +28,10 @@ public class FileProcessingService : IFileProcessingService
         return await client.GetByteArrayAsync(url);
     }
 
-    private async Task<string> SaveAsync(byte[] data, ulong guildId)
+    private async Task<string> SaveAsync(byte[] data, string extension, ulong guildId, string? subfolder)
     {
-        var guildFolder = _pathService.GetGuildFolder(guildId);
-        var filename = Guid.NewGuid().ToString();
+        var guildFolder = _pathService.GetGuildFolder(guildId, subfolder);
+        var filename = $"{Guid.NewGuid()}.{extension}";
         var path = Path.Combine(guildFolder, filename);
 
         await File.WriteAllBytesAsync(path, data);

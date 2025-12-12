@@ -14,7 +14,7 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
 {
     public SoundboardModule()
     {
-        
+
     }
 
     [Group("channel", "Soundboard channel related commands")]
@@ -194,11 +194,10 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
             }
 
             var attachment = tcsMessage.Task.Result.Attachments.First();
-            await tcsMessage.Task.Result.DeleteAsync();
             await FollowupAsync($"Received file: {attachment.Filename}. Label: {label}, Emoji: {emoji}, ButtonStyle: {chosenStyle}", ephemeral: true);
 
             SoundboardFileProcessor processor = new SoundboardFileProcessor();
-            string filePath = await _fileProcessingService.DownloadAndSaveAttachmentAsync(attachment.Url, Context.Guild.Id, processor);
+            string filePath = await _fileProcessingService.DownloadAndSaveAttachmentAsync(attachment.Url, attachment.Filename.Split(".").LastOrDefault() ?? string.Empty, Context.Guild.Id, PathService.SOUNDBOARD_SUBFOLDER, processor);
 
             await _soundRepository.CreateAsync(new SoundboardSound
             {
@@ -209,6 +208,7 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
                 GuildId = Context.Guild.Id
             });
 
+            await tcsMessage.Task.Result.DeleteAsync();
             await FollowupAsync("Sound created.", ephemeral: true);
         }
     }

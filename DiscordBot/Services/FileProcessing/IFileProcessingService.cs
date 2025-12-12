@@ -2,5 +2,5 @@
 
 public interface IFileProcessingService
 {
-    Task<string> DownloadAndSaveAttachmentAsync(string url, ulong guildId, IFileProcessor? fileProcessor);
+    Task<string> DownloadAndSaveAttachmentAsync(string url, string extension, ulong guildId, string subfolder, IFileProcessor? fileProcessor);
 }
