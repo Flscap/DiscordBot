@@ -205,6 +205,7 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
                 Label = label,
                 Emoji = emoji,
                 ButtonStyle = (int)chosenStyle,
+                Path = filePath,
                 GuildId = Context.Guild.Id
             });
 

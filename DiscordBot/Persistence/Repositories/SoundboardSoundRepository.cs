@@ -18,7 +18,7 @@ public class SoundboardSoundRepository : BaseRepository, IRepository<SoundboardS
     public Task<int> CreateAsync(SoundboardSound sound)
     {
         return _db.ExecuteAsync(
-            "INSERT INTO SoundboardSounds (Label, Emoji, ButtonStyle, GuildId) VALUES (@Label, @Emoji, @ButtonStyle, @GuildId);",
+            "INSERT INTO SoundboardSounds (Label, Emoji, ButtonStyle, Path, GuildId) VALUES (@Label, @Emoji, @ButtonStyle, @Path, @GuildId);",
             sound
         );
     }
@@ -26,7 +26,7 @@ public class SoundboardSoundRepository : BaseRepository, IRepository<SoundboardS
     public Task<ulong> PersistAsync(SoundboardSound sound)
     {
         return PersistAsync(
-            "INSERT INTO SoundboardSounds (Label, Emoji, ButtonStyle, GuildId) VALUES (@Label, @Emoji, @ButtonStyle, @GuildId);",
+            "INSERT INTO SoundboardSounds (Label, Emoji, ButtonStyle, Path, GuildId) VALUES (@Label, @Emoji, @ButtonStyle, @Path, @GuildId);",
             sound
         );
     }
@@ -34,7 +34,7 @@ public class SoundboardSoundRepository : BaseRepository, IRepository<SoundboardS
     public Task<int> UpdateAsync(SoundboardSound sound)
     {
         return _db.ExecuteAsync(
-            "UPDATE SoundboardSounds SET Label = @Label, Emoji = @Emoji, ButtonStyle = @ButtonStyle, GuildId = @GuildId WHERE Id = @Id;",
+            "UPDATE SoundboardSounds SET Label = @Label, Emoji = @Emoji, ButtonStyle = @ButtonStyle, Path = @Path, GuildId = @GuildId WHERE Id = @Id;",
             sound
         );
     }

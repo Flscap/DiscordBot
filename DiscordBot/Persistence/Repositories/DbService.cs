@@ -36,6 +36,7 @@ public class DbService : IDbService
                     Label TEXT NOT NULL,
                     Emoji TEXT,
                     ButtonStyle INTEGER NOT NULL,
+                    Path TEXT NOT NULL,
                     GuildId INTEGER NOT NULL,
                     FOREIGN KEY (GuildId) REFERENCES Guilds(Id) ON DELETE CASCADE
                 );";
