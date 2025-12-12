@@ -4,14 +4,11 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using DiscordBot.Persistence.Repositories;
 using DiscordBot.Services.CommandHandler;
-using DiscordBot.Services.FileManager;
 using DiscordBot.Services.FileProcessing;
 using DiscordBot.Services.InteractionHandler;
 using DiscordBot.Services.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DiscordBot;
 
