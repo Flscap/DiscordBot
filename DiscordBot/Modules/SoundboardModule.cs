@@ -1,11 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using DiscordBot.Components.Buttons;
 using DiscordBot.Persistence.Poco;
 using DiscordBot.Persistence.Repositories;
 using DiscordBot.Services.FileProcessing;
 using DiscordBot.Services.FileProcessing.Processors;
 using DiscordBot.Services.Logging;
+using System.Reflection.Emit;
 
 namespace DiscordBot.Modules;
 
@@ -204,12 +206,57 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
                 Label = label,
                 Emoji = emoji,
                 ButtonStyle = (int)chosenStyle,
-                Path = filePath,
+                FilePath = filePath,
                 GuildId = Context.Guild.Id
             });
 
             await tcsMessage.Task.Result.DeleteAsync();
             await FollowupAsync("Sound created.", ephemeral: true);
+        }
+
+        [SlashCommand("list", "Lists Soundboard sounds")]
+        public async Task ListSounds()
+        {
+            try
+            {
+                var sounds = await _soundRepository.RetrieveByGuildIdAsync(Context.Guild.Id);
+
+                var buttonChunks = sounds
+                    .Select(sound => new SoundboardButton
+                    {
+                        SoundboardSoundId = sound.Id,
+                        Label = sound.Label,
+                        Emoji = sound.Emoji,
+                        Style = (ButtonStyle)sound.ButtonStyle,
+                        FilePath = sound.FilePath
+                    }.ToDiscordButton())
+                    .ToArray()
+                    .Chunk(25);
+
+                bool first = true;
+
+                foreach (var chunk in buttonChunks)
+                {
+                    var builder = new ComponentBuilder();
+
+                    foreach (var button in chunk)
+                        builder.WithButton(button);
+
+                    if (first)
+                    {
+                        await RespondAsync(components: builder.Build());
+                        first = false;
+                    }
+                    else
+                    {
+                        await FollowupAsync(components: builder.Build());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
     }
 }
