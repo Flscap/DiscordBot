@@ -1,6 +1,6 @@
 ﻿namespace DiscordBot.Persistence.Poco;
 
-public class Sound
+public class SoundboardSound
 {
     public ulong Id { get; set; }
     public string? Label { get; set; }

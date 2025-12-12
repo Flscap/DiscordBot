@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using DiscordBot.Services.FileProcessing;
 using Microsoft.Data.Sqlite;
 using System.Data;
 
@@ -10,9 +11,9 @@ public class DbService : IDbService
     private SqliteConnection? _connection;
     public IDbConnection Connection => _connection ?? throw new InvalidOperationException("Database not connected.");
 
-    public DbService(string connectionString)
+    public DbService(PathService pathService)
     {
-        _connectionString = connectionString;
+        _connectionString = $"Data Source={pathService.DatabasePath}";
     }
 
     public async Task ConnectAsync()
@@ -30,13 +31,13 @@ public class DbService : IDbService
                     SoundboardTextChannelId INTEGER NOT NULL
                 );
 
-                CREATE TABLE IF NOT EXISTS Sounds (
+                CREATE TABLE IF NOT EXISTS SoundboardSounds (
                     Id INTEGER PRIMARY KEY,
                     Label TEXT NOT NULL,
                     Emoji TEXT,
                     ButtonStyle INTEGER NOT NULL,
                     GuildId INTEGER NOT NULL,
-                    FOREIGN KEY (GuildId) REFERENCES Guild(Id) ON DELETE CASCADE
+                    FOREIGN KEY (GuildId) REFERENCES Guilds(Id) ON DELETE CASCADE
                 );";
 
             await _connection.ExecuteAsync(initSql);
