@@ -44,17 +44,31 @@ public class InteractionHandlerService : IInteractionHandlerService
         };
     }
 
-    private async Task HandleInteraction(SocketInteraction interaction)
+    private Task HandleInteraction(SocketInteraction interaction)
     {
-        var ctx = new SocketInteractionContext(_client, interaction);
-
-        if (interaction is SocketMessageComponent component)
+        _ = Task.Run(async () =>
         {
-            await _interactionRouter.InvokeAsync(ctx, component);
-            return;
-        }
+            try
+            {
+                var ctx = new SocketInteractionContext(_client, interaction);
 
-        await _interactionService.ExecuteCommandAsync(ctx, _serviceProvider);
+                if (interaction is SocketMessageComponent component)
+                {
+                    await _interactionRouter.InvokeAsync(ctx, component);
+                }
+                else
+                {
+                    await _interactionService.ExecuteCommandAsync(ctx, _serviceProvider);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        });
+
+        // IMMEDIATELY return control to the gateway
+        return Task.CompletedTask;
     }
 
     private Task MessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)

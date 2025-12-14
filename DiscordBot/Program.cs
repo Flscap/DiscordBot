@@ -8,6 +8,7 @@ using DiscordBot.Services.CommandHandler;
 using DiscordBot.Services.FileProcessing;
 using DiscordBot.Services.InteractionHandler;
 using DiscordBot.Services.Logging;
+using DiscordBot.Services.Soundboard;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,6 +47,7 @@ public class Program
             .AddSingleton<InteractionRouter>()
             .AddSingleton<ITextCommandHandlerService, TextCommandHandlerService>()
             .AddSingleton<IInteractionHandlerService, InteractionHandlerService>()
+            .AddSingleton<SoundboardService>()
             .BuildServiceProvider();
 
 

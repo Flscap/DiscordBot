@@ -10,9 +10,6 @@ namespace DiscordBot.Modules;
 [Discord.Interactions.Group("music", "Music related commands")]
 public class MusicModule : InteractionModuleBase<SocketInteractionContext>
 {
-
-    private static readonly string FFMPEG_ARGS_REMOTE = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -vn";
-
     private readonly ILoggingService _logger;
 
     public MusicModule(ILoggingService loggingService)

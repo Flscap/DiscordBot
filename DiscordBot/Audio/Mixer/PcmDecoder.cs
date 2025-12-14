@@ -11,7 +11,7 @@ public static class PcmDecoder
         var psi = new ProcessStartInfo
         {
             FileName = "ffmpeg",
-            Arguments = $"-i \"{filePath}\" -f s16le -ac 2 -ar 48000 -",
+            Arguments = $"-loglevel quiet -nostdin -i \"{filePath}\" -f s16le -ac 2 -ar 48000 -",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
@@ -30,8 +30,7 @@ public static class PcmDecoder
 
             if (read < FrameSize)
             {
-                // pad last frame
-                Array.Resize(ref buffer, read);
+                Array.Clear(buffer, read, FrameSize - read);
             }
 
             yield return buffer.ToArray();

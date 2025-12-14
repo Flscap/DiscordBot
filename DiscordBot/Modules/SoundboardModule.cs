@@ -8,6 +8,7 @@ using DiscordBot.Services.FileProcessing;
 using DiscordBot.Services.FileProcessing.Processors;
 using DiscordBot.Services.InteractionHandler;
 using DiscordBot.Services.Logging;
+using DiscordBot.Services.Soundboard;
 
 namespace DiscordBot.Modules;
 
@@ -98,13 +99,15 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
         private readonly ILoggingService _logger;
         private readonly SoundboardSoundRepository _soundRepository;
         private readonly IFileProcessingService _fileProcessingService;
+        private readonly SoundboardService _soundboardService;
 
-        public SoundboardSoundModule(ILoggingService loggingService, SoundboardSoundRepository soundRepository, IFileProcessingService fileProcessingService, InteractionRouter interactionRouter)
+        public SoundboardSoundModule(ILoggingService loggingService, SoundboardSoundRepository soundRepository, IFileProcessingService fileProcessingService, InteractionRouter interactionRouter, SoundboardService soundboardService)
             : base(interactionRouter)
         {
             _logger = loggingService;
             _soundRepository = soundRepository;
             _fileProcessingService = fileProcessingService;
+            _soundboardService = soundboardService;
         }
 
         [SlashCommand("add", "Add sound to Soundboard")]
@@ -235,7 +238,21 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
                             .WithStyle((ButtonStyle)sound.ButtonStyle)
                             .WithInteractableCustomId(Context.Guild.Id, InteractionNamespace.Soundboard, async (SocketInteractionContext ctx, SocketMessageComponent component) =>
                             {
-                                await component.RespondAsync($"Play {sound.FilePath}", ephemeral: true);
+                                var user = (SocketGuildUser)ctx.User;
+                                var vc = user.VoiceChannel;
+
+                                if (vc is null)
+                                {
+                                    await component.RespondAsync(
+                                        "You must be in a voice channel.",
+                                        ephemeral: true);
+                                    return;
+                                }
+
+                                var source = await _soundboardService.GetOrCreateAsync(ctx.Guild, vc);
+                                source.Enqueue(sound.FilePath);
+
+                                await component.DeferAsync(ephemeral: true);
                             })
                     );
 

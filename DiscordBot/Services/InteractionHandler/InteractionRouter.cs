@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using System.Collections.Concurrent;
 
 namespace DiscordBot.Services.InteractionHandler;
 
@@ -8,14 +9,8 @@ public class InteractionRouter
 {
     public delegate Task InteractionHandler(SocketInteractionContext context, SocketMessageComponent component);
 
-    private Dictionary<string, InteractionHandler> _interactionHandlers = null!;
-    private Dictionary<ulong, List<string>> _messageComponents = null!;
-
-    public InteractionRouter()
-    {
-        _interactionHandlers = new Dictionary<string, InteractionHandler>();
-        _messageComponents = new Dictionary<ulong, List<string>>();
-    }
+    private readonly ConcurrentDictionary<string, InteractionHandler> _interactionHandlers = new();
+    private readonly ConcurrentDictionary<ulong, List<string>> _messageComponents = new();
 
     public void RegisterInteraction(string customId, InteractionHandler handler)
     {
@@ -26,7 +21,14 @@ public class InteractionRouter
     {
         if (_interactionHandlers.TryGetValue(component.Data.CustomId, out var handler))
         {
-            await handler(context, component);
+            try
+            {
+                await handler(context, component);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
     }
 
@@ -40,11 +42,12 @@ public class InteractionRouter
     {
         if (_messageComponents.TryGetValue(messageId, out var customIds))
         {
-            foreach (var customId in customIds)
+            lock (customIds)
             {
-                _interactionHandlers.Remove(customId);
+                foreach (var customId in customIds)
+                    _interactionHandlers.TryRemove(customId, out _);
             }
-            _messageComponents.Remove(messageId);
+            _messageComponents.TryRemove(messageId, out _);
         }
         Print();
     }
