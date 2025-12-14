@@ -1,13 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using DiscordBot.Components.Buttons;
+using DiscordBot.Extensions;
 using DiscordBot.Persistence.Poco;
 using DiscordBot.Persistence.Repositories;
 using DiscordBot.Services.FileProcessing;
 using DiscordBot.Services.FileProcessing.Processors;
+using DiscordBot.Services.InteractionHandler;
 using DiscordBot.Services.Logging;
-using System.Reflection.Emit;
 
 namespace DiscordBot.Modules;
 
@@ -16,11 +16,11 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
 {
     public SoundboardModule()
     {
-
+        
     }
 
     [Group("channel", "Soundboard channel related commands")]
-    public partial class SoundboardChannelModule : InteractionModuleBase<SocketInteractionContext>
+    public class SoundboardChannelModule : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly ILoggingService _logger;
         private GuildRepository _guildRepository;
@@ -93,13 +93,14 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     [Group("sound", "Soundboard sound related commands")]
-    public partial class SoundboardSoundModule : InteractionModuleBase<SocketInteractionContext>
+    public class SoundboardSoundModule : TrackedInteractionModuleBase
     {
         private readonly ILoggingService _logger;
         private readonly SoundboardSoundRepository _soundRepository;
         private readonly IFileProcessingService _fileProcessingService;
 
-        public SoundboardSoundModule(ILoggingService loggingService, SoundboardSoundRepository soundRepository, IFileProcessingService fileProcessingService)
+        public SoundboardSoundModule(ILoggingService loggingService, SoundboardSoundRepository soundRepository, IFileProcessingService fileProcessingService, InteractionRouter interactionRouter)
+            : base(interactionRouter)
         {
             _logger = loggingService;
             _soundRepository = soundRepository;
@@ -217,45 +218,36 @@ public class SoundboardModule : InteractionModuleBase<SocketInteractionContext>
         [SlashCommand("list", "Lists Soundboard sounds")]
         public async Task ListSounds()
         {
-            try
+            var sounds = await _soundRepository.RetrieveByGuildIdAsync(Context.Guild.Id);
+            var soundChunks = sounds.Chunk(25);
+
+            bool first = true;
+
+            foreach (var chunk in soundChunks)
             {
-                var sounds = await _soundRepository.RetrieveByGuildIdAsync(Context.Guild.Id);
+                var builder = new ComponentBuilder();
 
-                var buttonChunks = sounds
-                    .Select(sound => new SoundboardButton
-                    {
-                        SoundboardSoundId = sound.Id,
-                        Label = sound.Label,
-                        Emoji = sound.Emoji,
-                        Style = (ButtonStyle)sound.ButtonStyle,
-                        FilePath = sound.FilePath
-                    }.ToDiscordButton())
-                    .ToArray()
-                    .Chunk(25);
+                foreach (var sound in chunk)
+                    builder.WithButton(
+                        new ButtonBuilder()
+                            .WithLabel(sound.Label)
+                            .WithEmote(sound.Emoji != null ? new Emoji(sound.Emoji) : null)
+                            .WithStyle((ButtonStyle)sound.ButtonStyle)
+                            .WithInteractableCustomId(Context.Guild.Id, InteractionNamespace.Soundboard, async (SocketInteractionContext ctx, SocketMessageComponent component) =>
+                            {
+                                await component.RespondAsync($"Play {sound.FilePath}", ephemeral: true);
+                            })
+                    );
 
-                bool first = true;
-
-                foreach (var chunk in buttonChunks)
+                if (first)
                 {
-                    var builder = new ComponentBuilder();
-
-                    foreach (var button in chunk)
-                        builder.WithButton(button);
-
-                    if (first)
-                    {
-                        await RespondAsync(components: builder.Build());
-                        first = false;
-                    }
-                    else
-                    {
-                        await FollowupAsync(components: builder.Build());
-                    }
+                    await RespondAndStoreAsync(components: builder.Build());
+                    first = false;
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
+                else
+                {
+                    await FollowupAsync(components: builder.Build());
+                }
             }
         }
     }

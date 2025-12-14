@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using DiscordBot.Extensions;
 using DiscordBot.Persistence.Repositories;
 using DiscordBot.Services.CommandHandler;
 using DiscordBot.Services.FileProcessing;
@@ -42,6 +43,7 @@ public class Program
                 new InteractionServiceConfig { DefaultRunMode = Discord.Interactions.RunMode.Async }
             ))
             .AddSingleton<ILoggingService, LoggingService>()
+            .AddSingleton<InteractionRouter>()
             .AddSingleton<ITextCommandHandlerService, TextCommandHandlerService>()
             .AddSingleton<IInteractionHandlerService, InteractionHandlerService>()
             .BuildServiceProvider();
@@ -49,6 +51,9 @@ public class Program
 
         var db = _serviceProvider.GetRequiredService<IDbService>();
         await db.ConnectAsync();
+
+        var interactionRouter = _serviceProvider.GetRequiredService<InteractionRouter>();
+        CustomIdBuilderExtensions.Configure(interactionRouter);
 
         _serviceProvider.GetRequiredService<ILoggingService>().Initialize(_serviceProvider);
         await _serviceProvider.GetRequiredService<ITextCommandHandlerService>().InitializeAsync();
